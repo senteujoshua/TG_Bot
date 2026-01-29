@@ -40,7 +40,17 @@ logger = logging.getLogger(__name__)
 
 # Bot token
 TOKEN = os.getenv('BOT_TOKEN')
-ADMIN_ID = int(os.getenv('ADMIN_TELEGRAM_ID', '0'))
+
+# Parse admin ID safely (must be numeric Telegram ID, not username)
+_admin_id_str = os.getenv('ADMIN_TELEGRAM_ID', '0')
+try:
+    ADMIN_ID = int(_admin_id_str)
+except ValueError:
+    ADMIN_ID = 0
+    logging.warning(
+        f"ADMIN_TELEGRAM_ID '{_admin_id_str}' is not a valid numeric ID. "
+        "Use /start with the bot to get your Telegram ID."
+    )
 
 # Conversation states
 (
@@ -192,6 +202,18 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 Need support? Contact admin.
 """
     await update.message.reply_text(help_text, parse_mode='Markdown')
+
+
+async def myid_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /myid command - shows user their Telegram ID."""
+    user = update.effective_user
+    await update.message.reply_text(
+        f"*Your Telegram ID:* `{user.id}`\n\n"
+        f"Username: @{user.username or 'not set'}\n"
+        f"Name: {user.full_name}\n\n"
+        f"Copy the numeric ID above to use as ADMIN_TELEGRAM_ID in your .env file.",
+        parse_mode='Markdown'
+    )
 
 
 # ============== Age Verification ==============
@@ -1599,6 +1621,7 @@ def main():
 
     # Command handlers
     application.add_handler(CommandHandler('help', help_command))
+    application.add_handler(CommandHandler('myid', myid_command))
     application.add_handler(CommandHandler('shop', shop))
     application.add_handler(CommandHandler('sell', sell))
     application.add_handler(CommandHandler('orders', my_orders))
