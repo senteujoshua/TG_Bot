@@ -839,6 +839,10 @@ async def register_username(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     """Handle seller username input during registration."""
     username = update.message.text.strip()
 
+    # Remove @ prefix if user included it
+    if username.startswith('@'):
+        username = username[1:]
+
     # Validate username
     if len(username) < 3 or len(username) > 20:
         await update.message.reply_text(
@@ -846,9 +850,10 @@ async def register_username(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         )
         return SELLER_USERNAME
 
-    if not username.isalnum():
+    # Allow letters, numbers, and underscores
+    if not all(c.isalnum() or c == '_' for c in username):
         await update.message.reply_text(
-            "Username must contain only letters and numbers. Try again:"
+            "Username can only contain letters, numbers, and underscores. Try again:"
         )
         return SELLER_USERNAME
 
